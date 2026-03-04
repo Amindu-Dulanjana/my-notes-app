@@ -43,7 +43,8 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ msg: "Invalid email or password." });
     }
 
-    const isMatch = await user.comparePassword(password);
+    const bcrypt = require("bcryptjs");
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ msg: "Invalid email or password." });
     }
