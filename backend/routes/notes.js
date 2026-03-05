@@ -103,7 +103,7 @@ router.delete("/:id", protect, async (req, res) => {
 
     await note.deleteOne();
     res.json({ msg: "Note deleted" });
-    
+
   } catch (err) {
     res.status(500).json({ msg: "Server error", error: err.message });
   }
@@ -112,7 +112,7 @@ router.delete("/:id", protect, async (req, res) => {
 // POST /api/notes/:id/collaborators
 router.post("/:id/collaborators", protect, async (req, res) => {
   try {
-    console.log('👥 Adding collaborator to note:', req.params.id)
+    console.log('Adding collaborator to note:', req.params.id)
     const note = await Note.findById(req.params.id);
     if (!note) return res.status(404).json({ msg: "Note not found" });
 

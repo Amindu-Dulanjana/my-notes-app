@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-// import ReactQuill from 'react-quill'
-// import 'react-quill/dist/quill.snow.css'
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
 
@@ -12,7 +10,6 @@ function NoteDetail() {
   const { token } = useAuth();
 
   const [title, setTitle] = useState("");
-  //   const [content, setContent] = useState("");
   const [collaboratorEmail, setCollaboratorEmail] = useState("");
   const [collaborators, setCollaborators] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -115,12 +112,6 @@ function NoteDetail() {
         />
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-4">
-          {/* <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Start writing your note..."
-            className="w-full min-h-[300px] p-4 rounded-xl outline-none resize-none text-gray-700 text-base"
-          /> */}
 
           {/* Toolbar */}
           <div className="bg-white rounded-t-xl border border-gray-200 border-b-0 px-4 py-2 flex gap-2">
