@@ -40,14 +40,15 @@ function Dashboard() {
 
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/notes/search?q=${value}`,
+        `http://localhost:5000/api/notes/search?q=${encodeURIComponent(value)}`,
         { headers },
       );
+      console.log('Search results:', res.data);
       setNotes(res.data);
     } catch (err) {
-      console.error(err);
+      console.error('Search error:', err);
     }
-  };
+  }
 
   // Create new note
   const createNote = async () => {
