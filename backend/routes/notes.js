@@ -4,7 +4,7 @@ const Note = require("../models/Note");
 const User = require("../models/User");
 const protect = require("../middleware/auth");
 
-// GET /api/notes - Get all notes for the authenticated user
+// GET /api/notes
 router.get("/", protect, async (req, res) => {
   try {
     const notes = await Note.find({
@@ -16,45 +16,40 @@ router.get("/", protect, async (req, res) => {
 
     res.json(notes);
   } catch (err) {
-    console.log("Error:", err);
+
     res.status(500).json({ msg: "Server error", error: err.message });
   }
 });
 
-// GET /api/notes/search?q=keyword
+// GET /api/notes/search
 router.get("/search", protect, async (req, res) => {
   try {
-
     const query = req.query.q;
-
     if (!query || query.trim() === "") {
       const notes = await Note.find({
         $or: [{ owner: req.user.id }, { collaborators: req.user.id }],
-      })
-        return res.json(notes);
+      });
+      return res.json(notes);
     }
-
     const notes = await Note.find({
-      $or: [
-        { owner: req.user.id },
-        { collaborators: req.user.id },
-      ],
-        $or: [
+      $and: [
+        { $or: [{ owner: req.user.id }, { collaborators: req.user.id }] },
+        { $or: [
           { title: { $regex: query, $options: "i" } },
           { content: { $regex: query, $options: "i" } },
-        ],     
-
+        ]},
+      ],
     })
       .populate("owner", "name email")
       .sort({ updatedAt: -1 });
-
     res.json(notes);
+
   } catch (err) {
     res.status(500).json({ msg: "Server error", error: err.message });
   }
 });
 
-// POST /api/notes — create a note
+// POST /api/notes
 router.post("/", protect, async (req, res) => {
   try {
     const { title, content } = req.body;
@@ -71,14 +66,11 @@ router.post("/", protect, async (req, res) => {
   }
 });
 
-// PUT /api/notes/:id — update a note
+// PUT /api/notes/:id
 router.put("/:id", protect, async (req, res) => {
   try {
     const note = await Note.findById(req.params.id);
-
-    if (!note) {
-      return res.status(404).json({ msg: "Note not found" });
-    }
+    if (!note) return res.status(404).json({ msg: "Note not found" });
 
     const isOwner = note.owner.toString() === req.user.id;
     const isCollaborator = note.collaborators
@@ -91,66 +83,59 @@ router.put("/:id", protect, async (req, res) => {
 
     note.title = req.body.title || note.title;
     note.content = req.body.content || note.content;
-
     await note.save();
     res.json(note);
+
   } catch (err) {
     res.status(500).json({ msg: "Server error", error: err.message });
   }
 });
 
-// DELETE /api/notes/:id — delete a note
+// DELETE /api/notes/:id
 router.delete("/:id", protect, async (req, res) => {
   try {
     const note = await Note.findById(req.params.id);
-
-    if (!note) {
-      return res.status(404).json({ msg: "Note not found" });
-    }
+    if (!note) return res.status(404).json({ msg: "Note not found" });
 
     if (note.owner.toString() !== req.user.id) {
-      return res
-        .status(403)
-        .json({ msg: "Only the owner can delete this note" });
+      return res.status(403).json({ msg: "Only the owner can delete" });
     }
 
     await note.deleteOne();
-
     res.json({ msg: "Note deleted" });
+    
   } catch (err) {
     res.status(500).json({ msg: "Server error", error: err.message });
   }
 });
 
-// POST /api/notes/:id/collaborators — add a collaborator
+// POST /api/notes/:id/collaborators
 router.post("/:id/collaborators", protect, async (req, res) => {
   try {
+    console.log('👥 Adding collaborator to note:', req.params.id)
     const note = await Note.findById(req.params.id);
-
-    if (!note) {
-      return res.status(404).json({ msg: "Note not found" });
-    }
+    if (!note) return res.status(404).json({ msg: "Note not found" });
 
     if (note.owner.toString() !== req.user.id) {
-      return res
-        .status(403)
-        .json({ msg: "Only the owner can add collaborators" });
+      return res.status(403).json({ msg: "Only the owner can add collaborators" });
     }
 
     const userToAdd = await User.findOne({ email: req.body.email });
-    if (!userToAdd) {
-      return res.status(404).json({ msg: "User not found" });
-    }
+    if (!userToAdd) return res.status(404).json({ msg: "User not found" });
 
     if (note.collaborators.includes(userToAdd._id)) {
-      return res.status(400).json({ msg: "User is already a collaborator" });
+      return res.status(400).json({ msg: "Already a collaborator" });
     }
 
     note.collaborators.push(userToAdd._id);
     await note.save();
 
-    res.json({ msg: "Collaborator added", note });
+    const updatedNote = await Note.findById(note._id)
+      .populate("collaborators", "name email");
+
+    res.json({ msg: "Collaborator added", note: updatedNote });
   } catch (err) {
+    console.log('❌ Collaborate error:', err.message)
     res.status(500).json({ msg: "Server error", error: err.message });
   }
 });
